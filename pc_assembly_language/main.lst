@@ -1,0 +1,17 @@
+     1                                  ST_CODE equ 1 ; numeric constant 
+     2                                  
+     3                                  section .data: ; data segment, for initialized data
+     4 00000000 1419                        positions db 20, 25 ; label positions
+     5                                  
+     6                                  section .text: ; code segment. It is where the instruction are loaded in memory when the program starts
+     7                                  
+     8                                  global _start; defines a global label. Gives external scope for the label. Allows other modules to access this label 
+     9                                  ; labels are only nice names to reference the start of a memory location at ram 
+    10                                  
+    11                                  ; this main label points to the start of the instruction stored at ram
+    12                                  _start:
+    13 00000000 B801000000                  mov eax, 1 ; syscall 1 = exit
+    14 00000005 BB01000000                  mov ebx, ST_CODE
+    15 0000000A CD80                        int 80h ; a software interrupt. Uses eax value as the syscall
+    16                                  
+    17                                  
