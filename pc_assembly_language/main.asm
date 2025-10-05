@@ -1,4 +1,6 @@
-%include "defs.asm"
+%include "defs.inc"
+
+extern basic_input
 
 section .data 
     ; data segment, for initialized data
@@ -13,7 +15,6 @@ section .bss ; block start by symbols
     buffer resb 32
     bytes_read resb 1
 
-
 section .text 
 ; code segment. It is where the instruction are loaded in memory when the program starts
 
@@ -23,41 +24,10 @@ global _start
 
 ; this main label points to the start of the instruction stored at ram
 _start:
-    call print
-    ; after this, the next instruction inside _start label is pushed to the stack (it is the return address)
-    ; and then it jumps to print label
-    call read 
+    call basic_input
     
     mov eax, [positions] ; move 32 bits of data starting from the positions label
 
-    mov eax, 1 ; syscall 1 = exit
-    mov ebx, ST_CODE
+    mov eax, SYS_EXIT ; syscall 1 = exit
+    mov ebx, 1 
     syscall ; a software interrupt. Uses eax value as the syscall
-
-print_buffer:
-    PROLOGUE
-    EPILOGUE
-
-print:
-    PROLOGUE
-
-    mov eax, SYS_WRITE ; syscall write
-    mov ebx, STDOUT ; fd 1 = stdout
-    mov ecx, prompt ; buffer to display
-    mov edx, prompt_len ; bytes count of buffer to display
-    syscall
-
-    EPILOGUE
-
-read:
-    PROLOGUE
-    
-    mov eax, SYS_READ
-    mov ebx, STDIN
-    mov ecx, buffer ; buffer to read from
-    mov edx, 32
-    syscall
-
-    mov [bytes_read], eax ; bytes read count goes for eax
-
-    EPILOGUE

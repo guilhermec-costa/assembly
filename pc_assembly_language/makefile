@@ -1,16 +1,26 @@
-.PHONY: compile link default run
+ASSEMBLER = nasm
+LINKER = ld 
+ASSEMBLER_FLAGS = -f elf
+LINK_FLAGS = -m elf_i386
+BINARY = bin/main
 
-default: link 
+.PHONY: all run 
 
-compile:
-	@echo "Compilling nasm program"
-	nasm -f elf -l main.lst -o bin/main.o main.asm
-	# -l creates a listing file. the machine code generated
+SRCS := $(shell find . -name "*.asm")
+OBJS := $(patsubst %.asm, bin/%.o, $(SRCS))
 
-link: compile
-	@echo "Linking nasm program"
-	ld -m elf_i386 -o ./bin/main ./bin/main.o
+all: $(BINARY) 
 
-run: default
+$(BINARY): $(OBJS)
+	$(LINKER) $(LINK_FLAGS) $^ -o $@
+
+bin/%.o: %.asm
+	@mkdir -p $(dir $@) # dir $@ extracts the directory of the target
+	$(ASSEMBLER) $(ASSEMBLER_FLAGS) -o $@ $^
+
+run: all 
 	@echo "Running program..."
 	./bin/main
+
+clean:
+	rm -rf bin

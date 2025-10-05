@@ -1,7 +1,7 @@
 ; CONSTANTS
-ST_CODE equ 1; numeric constant 
 SYS_WRITE equ 4 ; sys_write
 SYS_READ equ 3 ; sys_read
+SYS_EXIT equ 1; sys_exit
 STDIN equ 0 ; fd = stdin
 STDOUT equ 1 ; fd = stdout
 
