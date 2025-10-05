@@ -1,17 +1,47 @@
-     1                                  ST_CODE equ 1 ; numeric constant 
-     2                                  
-     3                                  section .data: ; data segment, for initialized data
-     4 00000000 1419                        positions db 20, 25 ; label positions
-     5                                  
-     6                                  section .text: ; code segment. It is where the instruction are loaded in memory when the program starts
-     7                                  
-     8                                  global _start; defines a global label. Gives external scope for the label. Allows other modules to access this label 
-     9                                  ; labels are only nice names to reference the start of a memory location at ram 
-    10                                  
-    11                                  ; this main label points to the start of the instruction stored at ram
-    12                                  _start:
-    13 00000000 B801000000                  mov eax, 1 ; syscall 1 = exit
-    14 00000005 BB01000000                  mov ebx, ST_CODE
-    15 0000000A CD80                        int 80h ; a software interrupt. Uses eax value as the syscall
-    16                                  
-    17                                  
+     1                                  ST_CODE equ 1
+     2                                  ; numeric constant 
+     3                                  
+     4                                  section .data 
+     5                                      ; data segment, for initialized data
+     6 00000000 1419                        positions db 20, 25 ; label positions
+     7 00000002 48656C6C6F2066726F-         msg db "Hello from print", 10
+     7 0000000B 6D207072696E740A   
+     8                                      msg_len equ $ - msg ; $ points to the current point at the data segment
+     9                                  
+    10                                  section .bss ; block start by symbols
+    11                                      ; bss segment, for uninitialized data
+    12                                  
+    13                                  section .text 
+    14                                      ; code segment. It is where the instruction are loaded in memory when the program starts
+    15                                  
+    16                                  global _start
+    17                                      ; defines a global label. Gives external scope for the label. Allows other modules to access this label 
+    18                                      ; labels are only nice names to reference the start of a memory location at ram 
+    19                                  
+    20                                  ; this main label points to the start of the instruction stored at ram
+    21                                  _start:
+    22 00000000 E80C000000                  call print
+    23                                      ; after this, the next instruction inside _start label is pushed to the stack (it is the return address)
+    24                                      ; and then it jumps to print label
+    25                                  
+    26 00000005 B801000000                  mov eax, 1 ; syscall 1 = exit
+    27 0000000A BB01000000                  mov ebx, ST_CODE
+    28 0000000F CD80                        int 80h ; a software interrupt. Uses eax value as the syscall
+    29                                  
+    30                                  print:
+    31                                      ; this is super important, so at the end of the function it is possible to reset the stack frame to this point
+    32                                      ; this is called function prologue. Setup of the stack frame
+    33 00000011 55                          push ebp
+    34 00000012 89E5                        mov ebp, esp
+    35                                      
+    36                                      ; body
+    37 00000014 B804000000                  mov eax, 4 ; syscall write
+    38 00000019 BB01000000                  mov ebx, 1 ; fd 1 = stdout
+    39 0000001E B9[02000000]                mov ecx, msg ; buffer
+    40 00000023 BA11000000                  mov edx, msg_len ; bytes count
+    41 00000028 CD80                        int 80h
+    42                                  
+    43                                      ; this is called epilogue. Cleanup of the stack frame
+    44 0000002A 89EC                        mov esp, ebp
+    45 0000002C 5D                          pop ebp
+    46 0000002D C3                          ret
