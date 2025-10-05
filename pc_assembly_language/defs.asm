@@ -1,0 +1,26 @@
+; CONSTANTS
+ST_CODE equ 1; numeric constant 
+SYS_WRITE equ 4 ; sys_write
+SYS_READ equ 3 ; sys_read
+STDIN equ 0 ; fd = stdin
+STDOUT equ 1 ; fd = stdout
+
+; DEFINES
+%define syscall int 0x80 ; defined symbol
+
+; MACROS
+%macro PROLOGUE 0
+    ; this is super important, so at the end of the function it is possible to reset the stack frame to this point
+    ; this is called function prologue. Setup of the stack frame
+    push ebp
+    mov ebp, esp
+%endmacro
+
+%macro EPILOGUE 0
+    ; this is called epilogue. Cleanup of the stack frame
+    mov esp, ebp
+    pop ebp
+    ret
+%endmacro
+
+

@@ -1,47 +1,114 @@
-     1                                  ST_CODE equ 1
-     2                                  ; numeric constant 
-     3                                  
-     4                                  section .data 
-     5                                      ; data segment, for initialized data
-     6 00000000 1419                        positions db 20, 25 ; label positions
-     7 00000002 48656C6C6F2066726F-         msg db "Hello from print", 10
-     7 0000000B 6D207072696E740A   
-     8                                      msg_len equ $ - msg ; $ points to the current point at the data segment
+     1                                  %include "defs.asm"
+     1                              <1> ; CONSTANTS
+     2                              <1> ST_CODE equ 1; numeric constant 
+     3                              <1> SYS_WRITE equ 4 ; sys_write
+     4                              <1> SYS_READ equ 3 ; sys_read
+     5                              <1> STDIN equ 0 ; fd = stdin
+     6                              <1> STDOUT equ 1 ; fd = stdout
+     7                              <1> 
+     8                              <1> ; DEFINES
+     9                              <1> %define syscall int 0x80 ; defined symbol
+    10                              <1> 
+    11                              <1> ; MACROS
+    12                              <1> %macro PROLOGUE 0
+    13                              <1>     ; this is super important, so at the end of the function it is possible to reset the stack frame to this point
+    14                              <1>     ; this is called function prologue. Setup of the stack frame
+    15                              <1>     push ebp
+    16                              <1>     mov ebp, esp
+    17                              <1> %endmacro
+    18                              <1> 
+    19                              <1> %macro EPILOGUE 0
+    20                              <1>     ; this is called epilogue. Cleanup of the stack frame
+    21                              <1>     mov esp, ebp
+    22                              <1>     pop ebp
+    23                              <1>     ret
+    24                              <1> %endmacro
+    25                              <1> 
+    26                              <1> 
+     2                                  
+     3                                  section .data 
+     4                                      ; data segment, for initialized data
+     5 00000000 14191E23                    positions db 20, 25, 30, 35 ; label positions
+     6                                  
+     7 00000004 456E74657220736F6D-         prompt db "Enter some text: ", 0
+     7 0000000D 6520746578743A2000 
+     8                                      prompt_len equ $ - prompt ;$ points to the current point at the data segment
      9                                  
-    10                                  section .bss ; block start by symbols
-    11                                      ; bss segment, for uninitialized data
-    12                                  
-    13                                  section .text 
-    14                                      ; code segment. It is where the instruction are loaded in memory when the program starts
+    10                                  
+    11                                  section .bss ; block start by symbols
+    12                                  ; bss segment, for uninitialized data
+    13 00000000 <res 20h>                   buffer resb 32
+    14 00000020 ??                          bytes_read resb 1
     15                                  
-    16                                  global _start
-    17                                      ; defines a global label. Gives external scope for the label. Allows other modules to access this label 
-    18                                      ; labels are only nice names to reference the start of a memory location at ram 
+    16                                  
+    17                                  section .text 
+    18                                  ; code segment. It is where the instruction are loaded in memory when the program starts
     19                                  
-    20                                  ; this main label points to the start of the instruction stored at ram
-    21                                  _start:
-    22 00000000 E80C000000                  call print
-    23                                      ; after this, the next instruction inside _start label is pushed to the stack (it is the return address)
-    24                                      ; and then it jumps to print label
-    25                                  
-    26 00000005 B801000000                  mov eax, 1 ; syscall 1 = exit
-    27 0000000A BB01000000                  mov ebx, ST_CODE
-    28 0000000F CD80                        int 80h ; a software interrupt. Uses eax value as the syscall
-    29                                  
-    30                                  print:
-    31                                      ; this is super important, so at the end of the function it is possible to reset the stack frame to this point
-    32                                      ; this is called function prologue. Setup of the stack frame
-    33 00000011 55                          push ebp
-    34 00000012 89E5                        mov ebp, esp
-    35                                      
-    36                                      ; body
-    37 00000014 B804000000                  mov eax, 4 ; syscall write
-    38 00000019 BB01000000                  mov ebx, 1 ; fd 1 = stdout
-    39 0000001E B9[02000000]                mov ecx, msg ; buffer
-    40 00000023 BA11000000                  mov edx, msg_len ; bytes count
-    41 00000028 CD80                        int 80h
-    42                                  
-    43                                      ; this is called epilogue. Cleanup of the stack frame
-    44 0000002A 89EC                        mov esp, ebp
-    45 0000002C 5D                          pop ebp
-    46 0000002D C3                          ret
+    20                                  global _start
+    21                                  ; defines a global label. Gives external scope for the label. Allows other modules to access this label 
+    22                                  ; labels are only nice names to reference the start of a memory location at ram 
+    23                                  
+    24                                  ; this main label points to the start of the instruction stored at ram
+    25                                  _start:
+    26 00000000 E81D000000                  call print
+    27                                      ; after this, the next instruction inside _start label is pushed to the stack (it is the return address)
+    28                                      ; and then it jumps to print label
+    29 00000005 E835000000                  call read 
+    30                                      
+    31 0000000A A1[00000000]                mov eax, [positions] ; move 32 bits of data starting from the positions label
+    32                                  
+    33 0000000F B801000000                  mov eax, 1 ; syscall 1 = exit
+    34 00000014 BB01000000                  mov ebx, ST_CODE
+    35 00000019 CD80                        syscall ; a software interrupt. Uses eax value as the syscall
+    36                                  
+    37                                  print_buffer:
+    38                                      PROLOGUE
+    13                              <1> 
+    14                              <1> 
+    15 0000001B 55                  <1>  push ebp
+    16 0000001C 89E5                <1>  mov ebp, esp
+    39                                      EPILOGUE
+    20                              <1> 
+    21 0000001E 89EC                <1>  mov esp, ebp
+    22 00000020 5D                  <1>  pop ebp
+    23 00000021 C3                  <1>  ret
+    40                                  
+    41                                  print:
+    42                                      PROLOGUE
+    13                              <1> 
+    14                              <1> 
+    15 00000022 55                  <1>  push ebp
+    16 00000023 89E5                <1>  mov ebp, esp
+    43                                  
+    44 00000025 B804000000                  mov eax, SYS_WRITE ; syscall write
+    45 0000002A BB01000000                  mov ebx, STDOUT ; fd 1 = stdout
+    46 0000002F B9[04000000]                mov ecx, prompt ; buffer to display
+    47 00000034 BA12000000                  mov edx, prompt_len ; bytes count of buffer to display
+    48 00000039 CD80                        syscall
+    49                                  
+    50                                      EPILOGUE
+    20                              <1> 
+    21 0000003B 89EC                <1>  mov esp, ebp
+    22 0000003D 5D                  <1>  pop ebp
+    23 0000003E C3                  <1>  ret
+    51                                  
+    52                                  read:
+    53                                      PROLOGUE
+    13                              <1> 
+    14                              <1> 
+    15 0000003F 55                  <1>  push ebp
+    16 00000040 89E5                <1>  mov ebp, esp
+    54                                      
+    55 00000042 B803000000                  mov eax, SYS_READ
+    56 00000047 BB00000000                  mov ebx, STDIN
+    57 0000004C B9[00000000]                mov ecx, buffer ; buffer to read from
+    58 00000051 BA20000000                  mov edx, 32
+    59 00000056 CD80                        syscall
+    60                                  
+    61 00000058 A3[20000000]                mov [bytes_read], eax ; bytes read count goes for eax
+    62                                  
+    63                                      EPILOGUE
+    20                              <1> 
+    21 0000005D 89EC                <1>  mov esp, ebp
+    22 0000005F 5D                  <1>  pop ebp
+    23 00000060 C3                  <1>  ret
