@@ -12,7 +12,7 @@ STDOUT equ 1 ; fd = stdout
 %macro PROLOGUE 0
     ; this is super important, so at the end of the function it is possible to reset the stack frame to this point
     ; this is called function prologue. Setup of the stack frame
-    push ebp
+    push ebp ; stores the base address of the last stack frame
     mov ebp, esp
 %endmacro
 

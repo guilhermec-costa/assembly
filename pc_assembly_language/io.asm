@@ -4,11 +4,13 @@ global print_buffer
 
 print_buffer:
     PROLOGUE
-
+    
+    ; prompt, prompt_len, ret,   ebp
+    ; ebp+12, ebp+8     , ebp+4, ebp
     mov eax, SYS_WRITE
     mov ebx, STDOUT
-    mov ecx, [ebp+8] ; buf 
-    mov edx, [ebp+12] ; buf len 
+    mov ecx, [ebp+12] ; msg 
+    mov edx, [ebp+8] ; msg len 
     syscall
 
     EPILOGUE
